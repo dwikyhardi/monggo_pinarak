@@ -1,4 +1,4 @@
-# monggo_pinarak
+# Monggo Pinarak
 
 Restaurant Table Service using flutter and firebase
 
