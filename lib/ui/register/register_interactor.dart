@@ -9,8 +9,8 @@ class RegisterInteractor {
     await Encrypt().getPassKeyPref().then((passKey) async {
       await RegisterViewModel.onRegisterUser(
               email,
-              Encrypt().encrypt(password, passKey),
-              Encrypt().encrypt(userRole.toString().split('.').last, passKey),
+              password,
+              Encrypt().encrypt(getStringUserEnum[userRole] ?? '', passKey),
               name)
           .then((success) {
         if (success) {

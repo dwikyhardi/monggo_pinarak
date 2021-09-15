@@ -5,7 +5,7 @@ import 'package:monggo_pinarak/monggo_pinarak.dart';
 
 enum DrawerItems {
   order,
-  transaction,
+  // transaction,
   menu,
   report,
   register,
@@ -13,11 +13,31 @@ enum DrawerItems {
   login,
 }
 
+final Map<DrawerItems, String> getStringDrawerItems = {
+  DrawerItems.order: 'Order',
+  // DrawerItems.transaction: 'Transaction',
+  DrawerItems.menu: 'Menu',
+  DrawerItems.report: 'Report',
+  DrawerItems.register: 'Register',
+  DrawerItems.logout: 'Logout',
+  DrawerItems.login: 'Login',
+};
+
+final Map<String, DrawerItems> getDrawerItems = {
+  'Order': DrawerItems.order,
+  // 'Transaction': DrawerItems.transaction,
+  'Menu': DrawerItems.menu,
+  'Report': DrawerItems.report,
+  'Register': DrawerItems.register,
+  'Logout': DrawerItems.logout,
+  'Login': DrawerItems.login,
+};
+
 class DashboardDrawer extends StatelessWidget {
   final StreamController<DrawerItems?> _drawerChangeStream;
   final bool _isLogin;
   final UserData? _userData;
-  final String? _userRole;
+  final UserEnum? _userRole;
 
   DashboardDrawer(
       this._drawerChangeStream, this._isLogin, this._userData, this._userRole,
@@ -75,34 +95,38 @@ class DashboardDrawer extends StatelessWidget {
     if (_isLogin) {
       var children = <Widget>[];
 
-      UserEnum.values.forEach((element) {
-        if (element.toString().contains(_userRole ?? '')) {
-          if (element == UserEnum.admin) {
-            children.add(_orderButton(context));
-            children.add(_transactionButton(context));
-            children.add(_menuButton(context));
-            children.add(_reportButton(context));
-            children.add(_registerButton(context));
-            children.add(_logoutButton(context));
-          } else if (element == UserEnum.waitress) {
-            children.add(_orderButton(context));
-            children.add(_reportButton(context));
-            children.add(_registerButton(context));
-            children.add(_logoutButton(context));
-          } else if (element == UserEnum.cashier) {
-            children.add(_transactionButton(context));
-            children.add(_reportButton(context));
-            children.add(_registerButton(context));
-            children.add(_logoutButton(context));
-          } else if (element == UserEnum.owner) {
-            children.add(_reportButton(context));
-            children.add(_logoutButton(context));
-          } else if (element == UserEnum.user) {
-            children.add(_orderButton(context));
-            children.add(_logoutButton(context));
-          }
-        }
-      });
+      switch (_userRole) {
+        case UserEnum.Admin:
+          children.add(_orderButton(context));
+          // children.add(_transactionButton(context));
+          children.add(_menuButton(context));
+          children.add(_reportButton(context));
+          children.add(_registerButton(context));
+          children.add(_logoutButton(context));
+          break;
+        case UserEnum.Waitress:
+          children.add(_orderButton(context));
+          children.add(_reportButton(context));
+          children.add(_registerButton(context));
+          children.add(_logoutButton(context));
+          break;
+        case UserEnum.Cashier:
+          // children.add(_transactionButton(context));
+          children.add(_reportButton(context));
+          children.add(_registerButton(context));
+          children.add(_logoutButton(context));
+          break;
+        case UserEnum.Owner:
+          children.add(_reportButton(context));
+          children.add(_logoutButton(context));
+          break;
+        case UserEnum.User:
+          children.add(_orderButton(context));
+          children.add(_logoutButton(context));
+          break;
+        default:
+          break;
+      }
 
       return ListView(
         shrinkWrap: true,
@@ -149,12 +173,12 @@ class DashboardDrawer extends StatelessWidget {
     });
   }
 
-  Widget _transactionButton(BuildContext context) {
-    return _drawerItem(DrawerItems.transaction, onTap: () {
-      _drawerChangeStream.sink.add(DrawerItems.transaction);
-      Navigator.pop(context);
-    });
-  }
+  // Widget _transactionButton(BuildContext context) {
+  //   return _drawerItem(DrawerItems.transaction, onTap: () {
+  //     _drawerChangeStream.sink.add(DrawerItems.transaction);
+  //     Navigator.pop(context);
+  //   });
+  // }
 
   Widget _orderButton(BuildContext context) {
     return _drawerItem(DrawerItems.order, onTap: () {
@@ -175,10 +199,10 @@ class DashboardDrawer extends StatelessWidget {
         title = 'Order';
         icon = Icons.shopping_cart;
         break;
-      case DrawerItems.transaction:
-        title = 'Transaction';
-        icon = Icons.add_shopping_cart_outlined;
-        break;
+      // case DrawerItems.transaction:
+      //   title = 'Transaction';
+      //   icon = Icons.add_shopping_cart_outlined;
+      //   break;
       case DrawerItems.report:
         title = 'Report';
         icon = Icons.assessment_outlined;

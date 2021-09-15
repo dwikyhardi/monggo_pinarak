@@ -60,7 +60,7 @@ class _AddOrderState extends State<AddOrder> {
               stream: _menuDataListStream.stream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
-                  if (snapshot.hasData) {
+                  if (snapshot.hasData && (snapshot.data?.length ?? 0) > 0) {
                     return ListView.builder(
                         padding: EdgeInsets.only(
                             bottom: MediaQuery.of(context).size.width * 0.15),
@@ -96,7 +96,7 @@ class _AddOrderState extends State<AddOrder> {
             child: StreamBuilder<List<MenuData?>>(
                 stream: _selectedMenuDataListStream.stream,
                 builder: (context, snapshot) {
-                  if (snapshot.hasData) {
+                  if (snapshot.hasData && (snapshot.data?.length ?? 0) > 0) {
                     if ((snapshot.data?.length ?? 0) > 0) {
                       var selectedMenu = snapshot.data;
                       return ElevatedButton(
@@ -136,8 +136,13 @@ class _AddOrderState extends State<AddOrder> {
   }
 
   void _addOrderConfirmation() {
-    var index = 0;
     TextEditingController _tableNumberController = TextEditingController();
+    var totalQty = 0;
+    var totalPayment = 0.0;
+    _selectedMenuDataList.forEach((element) {
+      totalQty = totalQty + (element?.qty ?? 0);
+      totalPayment = totalPayment + ((element?.qty ?? 0) * (element?.price ?? 0));
+    });
     var _textEditingFocus = FocusNode();
     showModalBottomSheet(
         backgroundColor: Colors.transparent,
@@ -152,11 +157,13 @@ class _AddOrderState extends State<AddOrder> {
             ),
             cancelButton: CupertinoActionSheetAction(
               onPressed: () {
-                if(_tableNumberController.text.isNotEmpty){
+                if (_tableNumberController.text.isNotEmpty) {
                   Navigator.pop(buildContext);
-                  _addOrder(_tableNumberController.text);
-                }else{
-                  CustomDialog.showDialogWithoutTittle('Please Insert Table Number').then((_) {
+                  _addOrder(_tableNumberController.text, totalPayment, totalQty);
+                } else {
+                  CustomDialog.showDialogWithoutTittle(
+                          'Please Insert Table Number')
+                      .then((_) {
                     FocusScope.of(buildContext).requestFocus(_textEditingFocus);
                   });
                 }
@@ -169,7 +176,6 @@ class _AddOrderState extends State<AddOrder> {
               ),
             ),
             actions: _selectedMenuDataList.map((e) {
-              index++;
               return CupertinoActionSheetAction(
                 onPressed: () {},
                 child: Row(
@@ -177,7 +183,7 @@ class _AddOrderState extends State<AddOrder> {
                   children: [
                     RichText(
                       text: TextSpan(
-                        text: '$index. ${e?.name}',
+                        text: '${e?.name}',
                         style: TextStyle(
                           color: CupertinoColors.inactiveGray.darkColor,
                         ),
@@ -209,6 +215,46 @@ class _AddOrderState extends State<AddOrder> {
                   style: TextStyle(
                     color: CupertinoColors.inactiveGray,
                   ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                RichText(
+                  text: TextSpan(
+                      text: 'Total Quantity : ',
+                      style: TextStyle(color: Colors.black, fontSize: 12),
+                      children: [
+                        TextSpan(
+                          text: '$totalQty',
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(
+                          text: ' item',
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,),
+                        ),
+                      ]),
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                RichText(
+                  text: TextSpan(
+                      text: 'Total Payment : IDR ',
+                      style: TextStyle(color: Colors.black, fontSize: 12),
+                      children: [
+                        TextSpan(
+                          text: '${MoneyFormatter.format(totalPayment)}',
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ]),
                 ),
                 SizedBox(
                   height: 10,
@@ -247,7 +293,9 @@ class _AddOrderState extends State<AddOrder> {
       elevation: 2.0,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () {},
+        onTap: () {
+          _showMenuDetail(menuData);
+        },
         child: Row(
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -321,7 +369,7 @@ class _AddOrderState extends State<AddOrder> {
     );
   }
 
-  Widget _addMenuButton(MenuData? menuData) {
+  Widget _addMenuButton(MenuData? menuData, {bool isFromDetail = false}) {
     var updateQtyIndex = _selectedMenuDataList
         .indexWhere((element) => element?.menuId == menuData?.menuId);
     var isUpdateQty = updateQtyIndex != -1;
@@ -405,6 +453,9 @@ class _AddOrderState extends State<AddOrder> {
           _selectedMenuDataList.add(menuDataOrder);
           _selectedMenuDataListStream.sink.add(_selectedMenuDataList);
           setState(() {});
+          if(isFromDetail){
+            Navigator.pop(context);
+          }
         },
         child: Text(
           'Add',
@@ -423,22 +474,103 @@ class _AddOrderState extends State<AddOrder> {
     }
   }
 
-  void _addOrder(String tableNumber) async{
+  void _showMenuDetail(MenuData? menuData) {
+    showModalBottomSheet(
+        context: context,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        builder: (BuildContext buildContext) {
+          return Container(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                  child: CachedNetworkImage(
+                    imageUrl: menuData?.imageUrl ?? '',
+                    fit: BoxFit.cover,
+                    placeholder: (b, s) {
+                      return CupertinoActivityIndicator();
+                    },
+                    errorWidget: (b, s, _) {
+                      return Image.asset('assets/icons/ic_logo.png');
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Text(
+                            menuData?.name ?? '',
+                            style: TextStyle(
+                                color: ColorPalette.primaryColor,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          RichText(
+                            text: TextSpan(
+                              text: menuData?.description ?? '',
+                              style: TextStyle(color: Colors.grey[800]),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Text(
+                            'IDR ${MoneyFormatter.format(
+                              double.tryParse(menuData?.price.toString() ?? '0'),
+                            )}',
+                            style: TextStyle(
+                              color: ColorPalette.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                        ],
+                      ),
+                      _addMenuButton(menuData, isFromDetail: true),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+  }
+
+  void _addOrder(String tableNumber, double totalPayment, int totalQty) async {
     print('Table Number ============ $tableNumber');
     CustomDialog.showLoading();
     await OrderInteractor.createNewOrder(OrderData(
-      customerId: widget._userData?.email,
+      customerId: widget._userData?.uid,
       customerName: widget._userData?.name,
       dateTime: DateTime.now().millisecondsSinceEpoch,
-      orderStatus: 'Waiting',
+      orderStatus: getStringOrderEnum[OrderEnum.Waiting] ?? '',
       tableNumber: tableNumber,
       menu: _selectedMenuDataList,
+      totalPayment: totalPayment.toInt(),
+      totalQty: totalQty
     )).then((value) {
       Navigator.pop(context);
-      CustomDialog.showDialogWithoutTittle("Success Adding Order").then((value) {
+      CustomDialog.showDialogWithoutTittle("Success Adding Order")
+          .then((value) {
         Navigator.pop(context, true);
       });
-    }).catchError((e){
+    }).catchError((e) {
       Navigator.pop(context);
       CustomDialog.showDialogWithoutTittle(e);
     });

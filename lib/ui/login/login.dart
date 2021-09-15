@@ -175,15 +175,17 @@ class Login extends StatelessWidget {
     CustomDialog.showLoading();
     LoginInteractor.onLogin(_emailController.text, _passwordController.text)
         .then((isSuccess) {
+      print('IsSuccess ====== $isSuccess');
       if (isSuccess) {
         pushAndRemoveUntil(SplashScreen());
       } else {
         Navigator.pop(navGK.currentState!.context);
         CustomDialog.showDialogWithoutTittle('Error Login');
       }
-    }).catchError((e) {
-      // Navigator.pop(navGK.currentState!.context);
+    }).catchError((e, trace) {
+      Navigator.pop(navGK.currentState!.context);
       print(e);
+      print('StackTrace ======= ${trace.toString()}');
       CustomDialog.showDialogWithoutTittle(e);
     });
   }

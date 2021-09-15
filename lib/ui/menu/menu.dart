@@ -9,7 +9,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class Menu extends StatefulWidget {
   final StreamController<DrawerItems?> _drawerChangeStream;
-  final String? _userRole;
+  final UserEnum? _userRole;
 
   const Menu(this._drawerChangeStream, this._userRole, {Key? key})
       : super(key: key);
@@ -52,59 +52,57 @@ class _MenuState extends State<Menu> {
       width: MediaQuery.of(context).size.width,
       child: Stack(
         children: [
-          SmartRefresher(
-            onRefresh: () {
-              _getMenuList();
-            },
-            header: WaterDropHeader(
-              waterDropColor: ColorPalette.primaryColor,
-            ),
-            controller: _refreshController,
-            child: Container(
-              child: StreamBuilder<List<MenuData>>(
-                  stream: _menuDataListStream.stream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.active) {
-                      if (snapshot.hasData) {
-                        return GridView.builder(
-                            physics: NeverScrollableScrollPhysics(),
-                            padding: EdgeInsets.only(
-                                bottom:
-                                    MediaQuery.of(context).size.width * 0.15),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 1,
-                            ),
-                            itemCount: snapshot.data?.length ?? 0,
-                            itemBuilder:
-                                (BuildContext buildContext, int index) {
-                              return _cardMenu(snapshot.data?[index]);
-                            });
-                      } else {
-                        return Center(
-                          child: Text('No Data'),
-                        );
-                      }
-                    } else {
-                      return Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CupertinoActivityIndicator(),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            Text('Please Wait...'),
-                          ],
+          StreamBuilder<List<MenuData>>(
+              stream: _menuDataListStream.stream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.active) {
+                  if (snapshot.hasData && (snapshot.data?.length ?? 0) > 0) {
+                    return SmartRefresher(
+                      onRefresh: _getMenuList,
+                      enablePullDown: true,
+                      enablePullUp: false,
+                      scrollDirection: Axis.vertical,
+                      header: WaterDropHeader(
+                        waterDropColor: ColorPalette.primaryColor,
+                      ),
+                      controller: _refreshController,
+                      child: GridView.builder(
+                          padding: EdgeInsets.only(
+                              bottom:
+                                  MediaQuery.of(context).size.width * 0.15),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: snapshot.data?.length ?? 0,
+                          itemBuilder:
+                              (BuildContext buildContext, int index) {
+                            return _cardMenu(snapshot.data?[index]);
+                          }),
+                    );
+                  } else {
+                    return Center(
+                      child: Text('No Data'),
+                    );
+                  }
+                } else {
+                  return Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CupertinoActivityIndicator(),
+                        SizedBox(
+                          width: 10,
                         ),
-                      );
-                    }
-                  }),
-            ),
-          ),
-          if (widget._userRole == 'admin')
+                        Text('Please Wait...'),
+                      ],
+                    ),
+                  );
+                }
+              }),
+          if (widget._userRole == UserEnum.Admin)
             Positioned(
               bottom: 0.0,
               left: 10.0,

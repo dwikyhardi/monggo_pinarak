@@ -7,7 +7,7 @@ class Register extends StatefulWidget {
   Register(this._drawerChangeStream, this._userRole, {Key? key})
       : super(key: key);
   final StreamController<DrawerItems?> _drawerChangeStream;
-  final String? _userRole;
+  final UserEnum? _userRole;
 
   @override
   _RegisterState createState() => _RegisterState();
@@ -26,19 +26,19 @@ class _RegisterState extends State<Register> {
 
   bool _isObscure = true;
 
-  late List<UserEnum> _userRoleList = widget._userRole == 'admin'
+  late List<UserEnum> _userRoleList = widget._userRole == UserEnum.Admin
       ? [
-          UserEnum.admin,
-          UserEnum.cashier,
-          UserEnum.owner,
-          UserEnum.user,
-          UserEnum.waitress,
+          UserEnum.Admin,
+          UserEnum.Cashier,
+          UserEnum.Owner,
+          UserEnum.User,
+          UserEnum.Waitress,
         ]
       : [
-          UserEnum.cashier,
-          UserEnum.owner,
-          UserEnum.user,
-          UserEnum.waitress,
+          UserEnum.Cashier,
+          UserEnum.Owner,
+          UserEnum.User,
+          UserEnum.Waitress,
         ];
 
   @override
@@ -264,12 +264,9 @@ class _RegisterState extends State<Register> {
                           ),
                           dropdownColor: Colors.white,
                           items: _userRoleList.map((e) {
-                            var nameSplit = e.toString().split('.').last;
-                            var name =
-                                '${nameSplit.substring(0, 1).toUpperCase()}${nameSplit.substring(1, nameSplit.length).toLowerCase()}';
                             return DropdownMenuItem(
                               child: Text(
-                                name,
+                                  getStringUserEnum[e] ?? '',
                                 style:
                                     TextStyle(color: ColorPalette.primaryColor),
                               ),
@@ -314,11 +311,11 @@ class _RegisterState extends State<Register> {
     RegisterInteractor.onRegisterUser(
             _emailController.text,
             _passwordController.text,
-            _selectedUserRole ?? UserEnum.user,
+            _selectedUserRole ?? UserEnum.User,
             _nameController.text)
         .then((isSuccess) {
       if (isSuccess) {
-        widget._drawerChangeStream.sink.add(DrawerItems.transaction);
+        widget._drawerChangeStream.sink.add(DrawerItems.report);
       } else {
         CustomDialog.showDialogWithoutTittle('Error Register');
       }

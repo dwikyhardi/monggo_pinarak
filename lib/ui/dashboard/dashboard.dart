@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:monggo_pinarak/monggo_pinarak.dart';
@@ -19,7 +20,7 @@ class _DashboardState extends State<Dashboard> {
 
   bool _isLogin = false;
   UserData? _userData;
-  String? _userRole;
+  UserEnum? _userRole;
   String _appBarTitle = 'Monggo Pinarak';
 
   @override
@@ -27,10 +28,18 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
     checkLogin().then((_) {
       if (_isLogin) {
-        if (UserEnum.user.toString().contains(_userRole ?? '')) {
-          _drawerChangeStream.sink.add(DrawerItems.order);
-        } else {
-          _drawerChangeStream.sink.add(DrawerItems.report);
+        switch (_userRole) {
+          case UserEnum.Admin:
+          case UserEnum.Waitress:
+          case UserEnum.Cashier:
+          case UserEnum.Owner:
+            _drawerChangeStream.sink.add(DrawerItems.report);
+            break;
+          case UserEnum.User:
+            _drawerChangeStream.sink.add(DrawerItems.order);
+            break;
+          default:
+            _drawerChangeStream.sink.add(DrawerItems.login);
         }
       } else {
         _drawerChangeStream.sink.add(DrawerItems.login);
@@ -49,9 +58,7 @@ class _DashboardState extends State<Dashboard> {
     return StreamBuilder<DrawerItems?>(
         stream: _drawerChangeStream.stream,
         builder: (context, snapshot) {
-          var nameSplit = snapshot.data.toString().split('.').last;
-          _appBarTitle =
-              '${nameSplit.substring(0, 1).toUpperCase()}${nameSplit.substring(1, nameSplit.length).toLowerCase()}';
+          _appBarTitle = getStringDrawerItems[snapshot.data] ?? '';
           return Scaffold(
             appBar: AppBar(
               title: Text(_appBarTitle),
@@ -72,11 +79,20 @@ class _DashboardState extends State<Dashboard> {
     // print('UserData CheckLogin ====== $user');
     if (user != null) {
       if (mounted) {
-        _isLogin = true;
-        _userData = UserData.fromJson(jsonDecode(user));
-        _userRole = Encrypt().decrypt(
-            _userData?.userRole ?? '', await Encrypt().getPassKeyPref());
-        setState(() {});
+        await Encrypt().getPassKeyPref().then((passKey) {
+          _isLogin = true;
+          _userData = UserData.fromJson(jsonDecode(user));
+          _userRole =
+              getUserEnum[Encrypt().decrypt(_userData?.userRole, passKey)];
+          print('User Data ==== ${_userData?.toJson()}');
+          print(
+              'User Role ==== ${Encrypt().decrypt(_userData?.userRole, passKey)}');
+          print(
+              'User Role dec ==== ${getUserEnum[Encrypt().decrypt(_userData?.userRole, passKey)]}');
+          print(
+              'User Role enc ==== ${Encrypt().encrypt(getStringUserEnum[UserEnum.User] ?? '', passKey)}');
+          setState(() {});
+        });
       }
     } else {
       if (mounted) {
@@ -91,15 +107,15 @@ class _DashboardState extends State<Dashboard> {
     print('drawerItems ====== $drawerItems');
     switch (drawerItems) {
       case DrawerItems.order:
-        return Order(_drawerChangeStream, _userData);
-      case DrawerItems.transaction:
-        return Container(
-          child: Text(drawerItems.toString()),
-        );
+        return Order(
+            _userRole ?? UserEnum.User, _drawerChangeStream, _userData);
+      // case DrawerItems.transaction:
+      //   return Container(
+      //     child: Text(drawerItems.toString()),
+      //   );
       case DrawerItems.report:
-        return Container(
-          child: Text(drawerItems.toString()),
-        );
+        return Report(_drawerChangeStream, _userRole ?? UserEnum.User,
+            _userData?.uid ?? '');
       case DrawerItems.register:
         return Register(_drawerChangeStream, _userRole);
       case DrawerItems.logout:
@@ -119,8 +135,8 @@ class _DashboardState extends State<Dashboard> {
   void _onLogout() async {
     var pref = await SharedPreferences.getInstance();
     CustomDialog.showLoading();
-    pref.remove(Pref.USER.toString()).then((value) {
-      Future.delayed(Duration(seconds: 2), () {
+    await FirebaseAuth.instance.signOut().then((value) async {
+      await pref.remove(Pref.USER.toString()).then((value) {
         Navigator.pop(navGK.currentState!.context);
         pushAndRemoveUntil(SplashScreen());
       });

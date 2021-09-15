@@ -13,6 +13,7 @@ class ColorPalette {
   static const Color blue = Color(0xFF20bdb5);
   static const Color blueLight = Color(0xFF67f0e7);
   static const Color blueDark = Color(0xFF008c85);
+  static const Color chartBackground = Color(0xff232d37);
 
   static MaterialColor getPrimarySwatch() {
     List strengths = <double>[.05];

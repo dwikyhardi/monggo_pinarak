@@ -5,7 +5,7 @@ import 'package:monggo_pinarak/monggo_pinarak.dart';
 
 class MenuDetail extends StatelessWidget {
   final MenuData? menuData;
-  final String? _userRole;
+  final UserEnum? _userRole;
 
   const MenuDetail(this.menuData, this._userRole, {Key? key}) : super(key: key);
 
@@ -91,7 +91,7 @@ class MenuDetail extends StatelessWidget {
               SizedBox(
                 height: 10,
               ),
-              if (_userRole == 'admin')
+              if (_userRole == UserEnum.Admin)
                 ElevatedButton(
                   onPressed: () {
                     routePush(AddMenu(
@@ -115,7 +115,7 @@ class MenuDetail extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       )),
                 ),
-              if (_userRole == 'admin')
+              if (_userRole == UserEnum.Admin)
                 ElevatedButton(
                   onPressed: () {
                     _deleteMenuConfirmation(context);

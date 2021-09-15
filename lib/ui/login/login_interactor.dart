@@ -4,21 +4,26 @@ class LoginInteractor {
   static Future<bool> onLogin(String? username, String? password) async {
     print('username $username');
     print('password $password');
-    var isLoginSuccess = false;
-    await LoginViewModel.onLogin(username,
-            Encrypt().encrypt(password ?? '', await Encrypt().getPassKeyPref()))
-        .then((value) {
-      print('Success $value');
-      if (value) {
-        isLoginSuccess = value;
-      }else{
-        return Future.error('Unknown Login Error');
-      }
-    }).catchError((e) {
-      print('catchError Interactor $e');
-      isLoginSuccess = false;
-      return Future.error(e);
-    });
-    return isLoginSuccess;
+    return LoginViewModel.onLogin(username, password);
+    // await LoginViewModel.onLogin(username,
+    //         Encrypt().encrypt(password ?? '', await Encrypt().getPassKeyPref()))
+    //     .then((value) {
+    //   print('Success $value');
+    //   if (value) {
+    //     isLoginSuccess = value;
+    //   }else{
+    //     return Future.error('Unknown Login Error');
+    //   }
+    // }).catchError((e) {
+    //   print('catchError Interactor $e');
+    //   isLoginSuccess = false;
+    //   return Future.error(e);
+    // });
+    // return isLoginSuccess;
   }
+
+  static Future<List<UserData>> getUserList() async {
+    return LoginViewModel.getUserList();
+  }
+
 }

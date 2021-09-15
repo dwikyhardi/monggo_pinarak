@@ -144,14 +144,18 @@ class Encrypt {
     return base64.decode(passKey ?? '');
   }
 
-  String decrypt(String input, Uint8List passKey) {
-    var result;
-    var inputData = input.split("--");
-    var iv = base64.decode(inputData[1]);
-    var dataSource = base64.decode(inputData[0]);
-    var data = aesCbcDecrypt(passKey, iv, dataSource);
-    var decryptedBytes = unpad(data);
-    result = utf8.decode(decryptedBytes);
-    return result;
+  String decrypt(String? input, Uint8List passKey) {
+    if(input != null){
+      var result;
+      var inputData = input.split("--");
+      var iv = base64.decode(inputData[1]);
+      var dataSource = base64.decode(inputData[0]);
+      var data = aesCbcDecrypt(passKey, iv, dataSource);
+      var decryptedBytes = unpad(data);
+      result = utf8.decode(decryptedBytes);
+      return result;
+    }else{
+      return 'Input is null';
+    }
   }
 }
