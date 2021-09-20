@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:date_util/date_util.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -21,8 +22,7 @@ class Report extends StatefulWidget {
 }
 
 class _ReportState extends State<Report> {
-  final StreamController<Map<String, dynamic>> _reportStream =
-      StreamController();
+  final StreamController<ReportData> _reportStream = StreamController();
   ReportEnum _reportType = ReportEnum.Daily;
 
   @override
@@ -46,35 +46,33 @@ class _ReportState extends State<Report> {
   }
 
   void _getReportOrderAndTransaction({
-    required int menuCount,
-    required int userCount,
-    required List<MenuData> menuList,
-    required List<UserData> userList,
+    required ReportData? reportData,
+    required ReportEnum? reportType,
   }) {
-    ReportInteractor.getReportOrderAndTransaction(
-            widget._userRole, widget._userId,
-            reportType: _reportType,
-            menuCount: menuCount,
-            userCount: userCount,
-            menuList: menuList,
-            userList: userList)
-        .then((data) {
-      _reportStream.sink.add(data);
-    });
+    if (reportData != null && reportType != null) {
+      if (_reportType != reportType) {
+        ReportInteractor.getReportOrderAndTransaction(
+                widget._userRole, widget._userId,
+                reportType: _reportType, reportData: reportData)
+            .then((data) {
+          _reportStream.sink.add(data);
+          _reportType = reportType;
+          setState(() {});
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     var devWidth = MediaQuery.of(context).size.width;
     var devHeight = MediaQuery.of(context).size.height;
-    return StreamBuilder<Map<String, dynamic>>(
+    return StreamBuilder<ReportData>(
         stream: _reportStream.stream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
-            if (snapshot.hasData && (snapshot.data?.length ?? 0) > 0) {
-              var data = snapshot.data?['dataCount'] as Map<String, dynamic>;
-              var dataList = snapshot.data?['dataList'] as Map<String, dynamic>;
-              var orderList = dataList['orderList'];
+            if (snapshot.hasData && snapshot.data != null) {
+              ReportData data = snapshot.data!;
               return Container(
                 width: devWidth,
                 height: devHeight,
@@ -84,7 +82,7 @@ class _ReportState extends State<Report> {
                       child: Container(
                         child: Column(
                           children: [
-                            _buildChart(orderList),
+                            _buildChart(snapshot.data?.orderList),
                             GridView(
                               padding: EdgeInsets.symmetric(
                                 vertical: 10,
@@ -94,9 +92,16 @@ class _ReportState extends State<Report> {
                                       crossAxisCount: 2,
                                       childAspectRatio: 1.75),
                               shrinkWrap: true,
-                              children: data.entries.map((e) {
-                                return _reportWidget(devWidth, e);
-                              }).toList(),
+                              children: [
+                                _reportWidget(devWidth, 'Total Order',
+                                    data.orderCount ?? 0),
+                                _reportWidget(devWidth, 'Total Income',
+                                    data.totalIncome ?? 0),
+                                _reportWidget(devWidth, 'Total Menu',
+                                    data.menuCount ?? 0),
+                                _reportWidget(devWidth, 'Total User',
+                                    data.userCount ?? 0),
+                              ],
                               physics: NeverScrollableScrollPhysics(),
                             ),
                           ],
@@ -107,125 +112,47 @@ class _ReportState extends State<Report> {
                       bottom: 0.0,
                       left: 10.0,
                       right: 10.0,
-                      child: ElevatedButton(
+                      child: PrimaryColorButton(
                         onPressed: () {
-                          // 'dataCount': {
-                          // 'orderCount': orderCount,
-                          // 'menuCount': menuCount,
-                          // 'userCount': userCount,
-                          // },
-                          // 'dataList': {
-                          // 'orderList': orderList,
-                          // 'menuList': menuList,
-                          // 'userList': userList
-                          // }
-                          _changeFilter(
-                              menuCount: data['menuCount'],
-                              menuList: dataList['menuList'],
-                              userCount: data['userCount'],
-                              userList: dataList['userList']);
+                          _changeFilter(reportData: snapshot.data);
                         },
-                        child: Text('Change Filter'),
-                        style: ElevatedButton.styleFrom(
-                            primary: ColorPalette.primaryColor,
-                            onPrimary: Colors.white,
-                            fixedSize: Size(MediaQuery.of(context).size.width,
-                                MediaQuery.of(context).size.width * 0.1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            )),
+                        textTitle: 'Change Filter',
+                        size: Size(MediaQuery.of(context).size.width,
+                            MediaQuery.of(context).size.width * 0.1),
                       ),
                     ),
                   ],
                 ),
               );
             } else {
-              return Center(
-                child: Text('No Data'),
-              );
+              return NoDataPage();
             }
           } else {
-            return Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CupertinoActivityIndicator(),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Text('Please Wait...'),
-                ],
-              ),
-            );
+            return LoadingPage();
           }
         });
   }
 
-  void _changeFilter({
-    required int menuCount,
-    required int userCount,
-    required List<MenuData> menuList,
-    required List<UserData> userList,
-  }) {
+  void _changeFilter({required ReportData? reportData}) {
     showModalBottomSheet(
       backgroundColor: Colors.transparent,
       context: context,
       builder: (BuildContext buildContext) {
         return CupertinoActionSheet(
-          actions: <Widget>[
-            CupertinoDialogAction(
-              child:
-                  Text('${ReportEnum.Daily.toString().split('.').last} Report'),
-              onPressed: () {
-                if (_reportType != ReportEnum.Daily) {
-                  setState(() {
-                    _reportType = ReportEnum.Daily;
-                  });
+          actions: ReportEnum.values.map((e) {
+            if (e != ReportEnum.Day) {
+              return CupertinoDialogAction(
+                child: Text('${e.toString().split('.').last} Report'),
+                onPressed: () {
                   _getReportOrderAndTransaction(
-                      menuCount: menuCount,
-                      userCount: userCount,
-                      menuList: menuList,
-                      userList: userList);
-                }
-                Navigator.pop(buildContext);
-              },
-            ),
-            CupertinoDialogAction(
-              child: Text(
-                  '${ReportEnum.Monthly.toString().split('.').last} Report'),
-              onPressed: () {
-                if (_reportType != ReportEnum.Monthly) {
-                  setState(() {
-                    _reportType = ReportEnum.Monthly;
-                  });
-                  _getReportOrderAndTransaction(
-                      menuCount: menuCount,
-                      userCount: userCount,
-                      menuList: menuList,
-                      userList: userList);
-                }
-                Navigator.pop(buildContext);
-              },
-            ),
-            CupertinoDialogAction(
-              child: Text(
-                  '${ReportEnum.Annual.toString().split('.').last} Report'),
-              onPressed: () {
-                if (_reportType != ReportEnum.Annual) {
-                  setState(() {
-                    _reportType = ReportEnum.Annual;
-                  });
-                  _getReportOrderAndTransaction(
-                      menuCount: menuCount,
-                      userCount: userCount,
-                      menuList: menuList,
-                      userList: userList);
-                }
-                Navigator.pop(buildContext);
-              },
-            ),
-          ],
+                      reportData: reportData, reportType: e);
+                  Navigator.pop(buildContext);
+                },
+              );
+            } else {
+              return SizedBox();
+            }
+          }).toList(),
           cancelButton: CupertinoDialogAction(
             child: Text('Cancel'),
             onPressed: () {
@@ -279,19 +206,7 @@ class _ReportState extends State<Report> {
     }
   }
 
-  Widget _reportWidget(double devWidth, MapEntry<String, dynamic> data) {
-    var reportTitle = '';
-    switch (data.key) {
-      case 'orderCount':
-        reportTitle = 'Total Order';
-        break;
-      case 'menuCount':
-        reportTitle = 'Total Menu';
-        break;
-      case 'userCount':
-        reportTitle = 'Total User';
-        break;
-    }
+  Widget _reportWidget(double devWidth, String title, int value) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ClipRRect(
@@ -328,7 +243,7 @@ class _ReportState extends State<Report> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      reportTitle,
+                      title,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w300,
@@ -336,7 +251,9 @@ class _ReportState extends State<Report> {
                       ),
                     ),
                     Text(
-                      data.value.toString(),
+                      title == 'Total Income'
+                          ? 'IDR ${MoneyFormatter.format(value.toDouble())}'
+                          : MoneyFormatter.format(value.toDouble()),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,

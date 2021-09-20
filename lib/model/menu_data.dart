@@ -4,20 +4,23 @@ class MenuData {
   late int? price;
   late String? imageUrl;
   late String? menuId;
+  late bool? isActive;
 
   MenuData(
       {this.name,
        this.description,
        this.price,
        this.imageUrl,
-      this.menuId});
+      this.menuId,
+      this.isActive});
 
   MenuData.fromJson(Map<String, dynamic> json, {String? menuId}) {
     name = json['name'];
     description = json['description'];
     price = json['price'];
     imageUrl = json['image_url'];
-    if(menuId != null) this.menuId = menuId;
+    isActive = json['is_active'];
+    this.menuId = json['id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -26,6 +29,8 @@ class MenuData {
     data['description'] = this.description;
     data['price'] = this.price;
     data['image_url'] = this.imageUrl;
+    data['is_active'] = this.isActive;
+    data['id'] = this.menuId;
     return data;
   }
 }

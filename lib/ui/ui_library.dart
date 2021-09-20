@@ -18,10 +18,19 @@ export 'menu/menu_view_model.dart';
 
 //Order
 export 'order/order.dart';
+export 'order/add_order/add_order_confirmation.dart';
+export 'order/add_order/menu_order_grid_view.dart';
+export 'order/add_order/menu_detail_order.dart';
+export 'order/add_order/menu_order_list_view.dart';
 export 'order/order_interactor.dart';
 export 'order/order_view_model.dart';
-export 'order/add_order.dart';
+export 'order/add_order/add_order.dart';
 export 'order/update_order.dart';
+
+//Payment
+export 'payment/payment.dart';
+export 'payment/payment_interactor.dart';
+export 'payment/payment_view_model.dart';
 
 //Register
 export 'register/register.dart';
@@ -32,7 +41,10 @@ export 'register/register_view_model.dart';
 export 'report/report.dart';
 export 'report/report_interactor.dart';
 export 'report/report_view_model.dart';
-export 'report/chart.dart';
+export 'report/chart/chart.dart';
+export 'report/chart/annual_chart.dart';
+export 'report/chart/daily_chart.dart';
+export 'report/chart/monthly_chart.dart';
 
 //SplashScreen
 export 'splash_screen/splash_screen.dart';

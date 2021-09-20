@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:monggo_pinarak/monggo_pinarak.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Order extends StatefulWidget {
   const Order(this._userRole, this._drawerChangeStream, this._userData,
@@ -78,43 +81,23 @@ class _OrderState extends State<Order> {
                           }),
                     );
                   } else {
-                    return Center(
-                      child: Text('No Data'),
-                    );
+                    return NoDataPage();
                   }
                 } else {
-                  return Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CupertinoActivityIndicator(),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text('Please Wait...'),
-                      ],
-                    ),
-                  );
+                  return LoadingPage();
                 }
               }),
           Positioned(
             bottom: 0.0,
             right: 10.0,
             left: 10.0,
-            child: ElevatedButton(
+            child: PrimaryColorButton(
               onPressed: () {
                 _addOrder();
               },
-              child: Text('Add Order'),
-              style: ElevatedButton.styleFrom(
-                  primary: ColorPalette.primaryColor,
-                  onPrimary: Colors.white,
-                  fixedSize: Size(MediaQuery.of(context).size.width,
-                      MediaQuery.of(context).size.width * 0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  )),
+              textTitle: 'Add Order',
+              size: Size(MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.width * 0.1),
             ),
           ),
         ],
@@ -159,7 +142,9 @@ class _OrderState extends State<Order> {
                   Text(orderData?.orderStatus ?? ''),
                 ],
               ),
-              Text(orderData?.customerName ?? ''),
+              Text(
+                '${orderData?.customer?.firstName ?? ''} ${orderData?.customer?.lastName ?? ''}',
+              ),
               Text('Table Number : ${orderData?.tableNumber ?? ''}'),
               Text(
                   '${formatterDMY.format(DateTime.fromMillisecondsSinceEpoch(orderData?.dateTime ?? 0))}'),
@@ -170,7 +155,28 @@ class _OrderState extends State<Order> {
     );
   }
 
-  void _updateOrder(OrderData? orderData) {
+  Future<void> _updateOrder(OrderData? orderData) async {
+    print('OrderId === ${orderData?.orderId}');
+
+    if (getOrderEnum[orderData?.orderStatus] == OrderEnum.Cancel) {
+      _showDetailOrder(orderData);
+    } else {
+      await OrderInteractor.getOrderStatus(orderData?.orderId ?? '')
+          .then((orderStatus) async {
+        Navigator.pop(context);
+        await _checkOrderStatus(orderStatus, orderData, false).then((value) {
+          print('_checkOrderStatus Value ========= ${jsonEncode(value)}');
+          _showDetailOrder(value);
+        });
+      }).catchError((e, stack) {
+        Navigator.pop(context);
+        print('Stack ====== ${stack.toString()}');
+        CustomDialog.showDialogWithoutTittle(e.toString());
+      });
+    }
+  }
+
+  void _showDetailOrder(OrderData? value) {
     showModalBottomSheet(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -179,36 +185,230 @@ class _OrderState extends State<Order> {
         elevation: 5,
         context: context,
         builder: (BuildContext buildContext) {
-          return UpdateOrder(widget._userRole, orderData, _updateOrderStatus);
+          return UpdateOrder(
+            widget._userRole,
+            value,
+            _updateOrderStatus,
+            _payOrder,
+            _cancelOrder,
+          );
         });
   }
 
-  void _updateOrderStatus(OrderData? orderData) {
-    CustomDialog.showLoading();
-    var orderStatus = orderData?.orderStatus ?? '';
-    switch (getOrderEnum[orderStatus]) {
-      case OrderEnum.Waiting:
-        orderData?.orderStatus = getStringOrderEnum[OrderEnum.Process];
-        break;
-      case OrderEnum.Process:
-      case OrderEnum.Finish:
-        orderData?.orderStatus = getStringOrderEnum[OrderEnum.Finish];
-        break;
-      default:
-        orderData?.orderStatus = getStringOrderEnum[OrderEnum.Waiting];
-    }
-    OrderInteractor.updateOrder(orderData, orderData?.orderId).then((value) {
+  void _payOrder(OrderData? orderData) {
+    OrderInteractor.getOrderStatus(orderData?.orderId ?? '')
+        .then((orderStatus) {
       Navigator.pop(context);
-      CustomDialog.showDialogWithoutTittle('Success Update Order')
-          .then((value) => _refreshController.requestRefresh());
-    }).catchError((e) {
+      _checkOrderStatus(orderStatus, orderData, true);
+    }).catchError((e, stack) {
       Navigator.pop(context);
-      CustomDialog.showDialogWithoutTittle(e);
+      print('Stack ====== ${stack.toString()}');
+      CustomDialog.showDialogWithoutTittle(e.toString());
     });
   }
 
+  Future<OrderData?> _checkOrderStatus(Map<String, dynamic> orderStatus,
+      OrderData? orderData, bool isPay) async {
+    print('OrderStatus ============= ${jsonEncode(orderStatus)}');
+    if (orderStatus['transaction_status'] !=
+        orderData?.payment?.paymentStatus) {
+      orderData?.payment?.paymentStatus = orderStatus['transaction_status'];
+      orderData?.payment?.paymentMethod = orderStatus['payment_type'];
+      orderData?.payment?.totalPayment =
+          double.tryParse(orderStatus['gross_amount'])?.toInt();
+      return await _updateOrderStatus(orderData, false).then((value) {
+        print('_updateOrderStatus Value ======= ${jsonEncode(value)}');
+        if (isPay) {
+          if (orderStatus['status_code'] == "407") {
+            _rechargeOrder(orderData);
+          } else if (orderStatus['status_code'] == "201") {
+            _payOrderBottomSheet(orderData);
+          }
+        }
+        return value;
+      });
+    } else {
+      if (isPay) {
+        if (orderStatus['status_code'] == "407") {
+          _rechargeOrder(orderData);
+        } else if (orderStatus['status_code'] == "201") {
+          _payOrderBottomSheet(orderData);
+        }
+      }
+      return orderData;
+    }
+  }
+
+  void _rechargeOrder(OrderData? orderData) async {
+    if (orderData != null) {
+      print(
+          'Payment method ====== ${getPaymentMethod[orderData.payment?.paymentMethod]}');
+      print('Payment method ====== ${orderData.payment?.paymentMethod}');
+      await OrderInteractor.rechargeOrder(
+              orderData, getPaymentMethod[orderData.payment?.paymentMethod])
+          .then((orderData) {
+        _payOrderBottomSheet(orderData);
+      }).catchError((e) {
+        CustomDialog.showDialogWithoutTittle(e.toString());
+      });
+    } else {
+      CustomDialog.showDialogWithoutTittle('Order Is Not Valid');
+    }
+  }
+
+  void _payOrderBottomSheet(OrderData? orderData) {
+    var qrCodeUrl = '';
+    var jumpAppUrl = '';
+    var appName =
+        '${orderData?.payment?.paymentMethod?.substring(0, 1).toUpperCase()}${orderData?.payment?.paymentMethod?.substring(1, orderData.payment?.paymentMethod?.length)}';
+    print('OrderData ===== ${jsonEncode(orderData)}');
+    orderData?.payment?.actions?.forEach((element) {
+      if (element?.name == 'generate-qr-code') {
+        qrCodeUrl = element?.url ?? '';
+      } else if (element?.name == 'deeplink-redirect') {
+        jumpAppUrl = element?.url ?? '';
+      }
+    });
+    showModalBottomSheet(
+        backgroundColor: Colors.transparent,
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext buildContext) {
+          return CupertinoActionSheet(
+            title: Text('Select Payment'),
+            actions: [
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _jumpApps(jumpAppUrl);
+                },
+                child: Text(
+                  'Open $appName Apps',
+                  style: TextStyle(
+                    color: CupertinoColors.activeBlue,
+                  ),
+                ),
+              ),
+              if (qrCodeUrl.isNotEmpty)
+                CupertinoActionSheetAction(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    openQRCode(qrCodeUrl);
+                  },
+                  child: Text(
+                    'Show QR Code',
+                    style: TextStyle(
+                      color: CupertinoColors.activeBlue,
+                    ),
+                  ),
+                ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () {
+                Navigator.pop(buildContext);
+              },
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: CupertinoColors.activeBlue,
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
+  void openQRCode(String? qrUrl) {
+    showModalBottomSheet(
+        context: context,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        builder: (BuildContext buildContext) {
+          return ClipRRect(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              padding: EdgeInsets.symmetric(
+                vertical: 20,
+                horizontal: 10,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl: qrUrl ?? '',
+                  width: MediaQuery.of(context).size.width,
+                  fit: BoxFit.cover,
+                  placeholder: (b, s) {
+                    return CupertinoActivityIndicator();
+                  },
+                  errorWidget: (b, s, _) {
+                    return Image.asset(
+                      'assets/icons/ic_logo.png',
+                      color: Colors.white,
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
+  Future<void> _jumpApps(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  void _cancelOrder(OrderData? orderData) {
+    //TODO: add cancel to midtrans
+    CustomDialog.showLoading();
+    OrderInteractor.updateOrder(orderData, true).then((value) {
+      Navigator.pop(context);
+      CustomDialog.showDialogWithoutTittle('Success Cancel Order')
+          .then((value) => _refreshController.requestRefresh());
+    }).catchError((e) {
+      Navigator.pop(context);
+      CustomDialog.showDialogWithoutTittle(e.toString());
+    });
+  }
+
+  Future<OrderData> _updateOrderStatus(
+      OrderData? orderData, bool isShowDetail) async {
+    var data = orderData;
+    CustomDialog.showLoading();
+    if(data?.payment?.paymentStatus == 'pending' || data?.payment?.paymentStatus == 'expire'){
+      data?.orderStatus = getStringOrderEnum[OrderEnum.WaitingPayment];
+      print('Update ====== ${jsonEncode(data)}');
+    }
+    await OrderInteractor.updateOrder(data, false).then((value) {
+      data = value;
+      Navigator.pop(context);
+      if (isShowDetail) {
+        CustomDialog.showDialogWithoutTittle('Success Update Order')
+            .then((value) => _refreshController.requestRefresh());
+      } else {
+        _refreshController.requestRefresh();
+      }
+    }).catchError((e) {
+      Navigator.pop(context);
+      if (isShowDetail) {
+        CustomDialog.showDialogWithoutTittle(e.toString());
+      }
+    });
+    return data ?? OrderData();
+  }
+
   void _addOrder() {
-    routePush(AddOrder(widget._userData)).then((isNewOrder) {
+    routePush(AddOrder(widget._userData, widget._userRole)).then((isNewOrder) {
       if (isNewOrder != null) {
         if (isNewOrder) {
           _getOrderList();

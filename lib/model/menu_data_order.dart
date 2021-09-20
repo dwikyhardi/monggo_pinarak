@@ -18,6 +18,9 @@ class MenuDataOrder implements MenuData {
 
   int? qty;
 
+  @override
+  bool? isActive;
+
   MenuDataOrder(
       {this.description,
       this.imageUrl,

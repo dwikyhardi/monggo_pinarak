@@ -13,20 +13,40 @@ class MenuViewModel {
 
   ///Get Method
 
-  static Future<List<MenuData>> getMenuList() async {
+  static Future<List<MenuData>> getMenuList(bool isFromOrder) async {
     List<MenuData> menuDataList = <MenuData>[];
-    await _menu.get().then((menuList) {
-      menuList.docs.forEach((menuData) {
-        if (menuData.exists && menuData.data() != null) {
-          print(
-              'Menu Object ${menuData.id} ======== ${jsonEncode(menuData.data())}');
-          menuDataList.add(MenuData.fromJson(
-              menuData.data() as Map<String, dynamic>,
-              menuId: menuData.id));
-        }
+    if (isFromOrder) {
+      print(
+          'isFromOrder ═════════════════════════════════════════════════════════════════════════════════════════════════');
+      await _menu
+          // .orderBy('name')
+          .where('is_active', isEqualTo: true)
+          .get()
+          .then((menuList) {
+        menuList.docs.forEach((menuData) {
+          if (menuData.exists && menuData.data() != null) {
+            print(
+                'Menu Object ${menuData.id} ======== ${jsonEncode(menuData.data())}');
+            menuDataList.add(MenuData.fromJson(
+                menuData.data() as Map<String, dynamic>,
+                menuId: menuData.id));
+          }
+        });
       });
-    });
-
+    } else {
+      await _menu.orderBy('name').get().then((menuList) {
+        menuList.docs.forEach((menuData) {
+          if (menuData.exists && menuData.data() != null) {
+            print(
+                'Menu Object ${menuData.id} ======== ${jsonEncode(menuData.data())}');
+            menuDataList.add(MenuData.fromJson(
+                menuData.data() as Map<String, dynamic>,
+                menuId: menuData.id));
+          }
+        });
+      });
+    }
+    menuDataList.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
     return menuDataList;
   }
 
@@ -60,6 +80,8 @@ class MenuViewModel {
           return await updateDataMenu(
             response.id,
             MenuData(
+              menuId: response.id,
+              isActive: true,
               name: value.name,
               description: value.description,
               price: value.price,
@@ -126,6 +148,8 @@ class MenuViewModel {
           return updateDataMenu(
               id,
               MenuData(
+                menuId: id,
+                isActive: true,
                 name: menuData.name,
                 description: menuData.description,
                 price: menuData.price,

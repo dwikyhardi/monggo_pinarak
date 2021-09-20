@@ -322,7 +322,7 @@ class _RegisterState extends State<Register> {
       Navigator.pop(navGK.currentState!.context);
     }).catchError((e) {
       Navigator.pop(navGK.currentState!.context);
-      CustomDialog.showDialogWithoutTittle(e);
+      CustomDialog.showDialogWithoutTittle(e.toString());
     });
   }
 }

@@ -112,6 +112,7 @@ class DashboardDrawer extends StatelessWidget {
           break;
         case UserEnum.Cashier:
           // children.add(_transactionButton(context));
+          children.add(_orderButton(context));
           children.add(_reportButton(context));
           children.add(_registerButton(context));
           children.add(_logoutButton(context));

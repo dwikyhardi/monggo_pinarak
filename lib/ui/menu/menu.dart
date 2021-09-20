@@ -82,24 +82,10 @@ class _MenuState extends State<Menu> {
                           }),
                     );
                   } else {
-                    return Center(
-                      child: Text('No Data'),
-                    );
+                    return NoDataPage();
                   }
                 } else {
-                  return Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CupertinoActivityIndicator(),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text('Please Wait...'),
-                      ],
-                    ),
-                  );
+                  return LoadingPage();
                 }
               }),
           if (widget._userRole == UserEnum.Admin)
@@ -107,7 +93,7 @@ class _MenuState extends State<Menu> {
               bottom: 0.0,
               left: 10.0,
               right: 10.0,
-              child: ElevatedButton(
+              child: PrimaryColorButton(
                 onPressed: () {
                   routePush(AddMenu(false)).then((isNewData) {
                     if (isNewData != null) {
@@ -117,15 +103,9 @@ class _MenuState extends State<Menu> {
                     }
                   });
                 },
-                child: Text('Add Menu'),
-                style: ElevatedButton.styleFrom(
-                    primary: ColorPalette.primaryColor,
-                    onPrimary: Colors.white,
-                    fixedSize: Size(MediaQuery.of(context).size.width,
-                        MediaQuery.of(context).size.width * 0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    )),
+                textTitle: 'Add Menu',
+                size: Size(MediaQuery.of(context).size.width,
+                    MediaQuery.of(context).size.width * 0.1),
               ),
             ),
         ],

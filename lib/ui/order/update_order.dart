@@ -6,12 +6,20 @@ import 'package:monggo_pinarak/monggo_pinarak.dart';
 class UpdateOrder extends StatelessWidget {
   final OrderData? _orderData;
   final UserEnum? _userRole;
-  final Function(OrderData?) _updateOrderStatus;
-  UpdateOrder(this._userRole, this._orderData,this._updateOrderStatus, {Key? key}) : super(key: key);
+  final Function(OrderData?, bool) _updateOrderStatus;
+  final Function(OrderData?) _payOrder;
+  final Function(OrderData?) _cancelOrder;
+
+  UpdateOrder(this._userRole, this._orderData, this._updateOrderStatus,
+      this._payOrder, this._cancelOrder,
+      {Key? key})
+      : super(key: key);
   final DateFormat formatterDMY = DateFormat('dd-MM-yyyy HH:mm');
 
   @override
   Widget build(BuildContext context) {
+    var paymentMethod =
+        '${_orderData?.payment?.paymentMethod?.substring(0, 1).toUpperCase()}${_orderData?.payment?.paymentMethod?.substring(1, _orderData?.payment?.paymentMethod?.length)}';
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
       decoration: BoxDecoration(
@@ -25,7 +33,9 @@ class UpdateOrder extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _userRole == UserEnum.User ? 'Detail Order':'Update Order Status',
+                _userRole == UserEnum.User
+                    ? 'Detail Order'
+                    : 'Update Order Status',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 17,
@@ -51,7 +61,8 @@ class UpdateOrder extends StatelessWidget {
                 style: TextStyle(color: Colors.black, fontSize: 12),
                 children: [
                   TextSpan(
-                    text: _orderData?.customerName ?? '',
+                    text:
+                        '${_orderData?.customer?.firstName ?? ''} ${_orderData?.customer?.lastName ?? ''}',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
@@ -80,13 +91,28 @@ class UpdateOrder extends StatelessWidget {
                 children: [
                   TextSpan(
                     text:
-                    '${formatterDMY.format(DateTime.fromMillisecondsSinceEpoch(_orderData?.dateTime ?? 0))}',
+                        '${formatterDMY.format(DateTime.fromMillisecondsSinceEpoch(_orderData?.dateTime ?? 0))}',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 12,
                         fontWeight: FontWeight.bold),
                   ),
                 ]),
+          ),
+          RichText(
+            text: TextSpan(
+              text: 'Payment Method : ',
+              style: TextStyle(color: Colors.black, fontSize: 12),
+              children: [
+                TextSpan(
+                  text: '$paymentMethod',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
           Divider(
             height: 20,
@@ -109,8 +135,7 @@ class UpdateOrder extends StatelessWidget {
                         children: [
                           Text(
                             '${data?.name} ',
-                            style: TextStyle(
-                                color: Colors.black, fontSize: 12),
+                            style: TextStyle(color: Colors.black, fontSize: 12),
                           ),
                           Text(
                             'x${data?.qty}',
@@ -136,8 +161,7 @@ class UpdateOrder extends StatelessWidget {
             children: [
               Text(
                 'Total Quantity : ',
-                style: TextStyle(
-                    color: Colors.black, fontSize: 14),
+                style: TextStyle(color: Colors.black, fontSize: 14),
               ),
               Text(
                 '${_orderData?.totalQty}',
@@ -156,8 +180,7 @@ class UpdateOrder extends StatelessWidget {
             children: [
               Text(
                 'Total Payment : ',
-                style: TextStyle(
-                    color: Colors.black, fontSize: 14),
+                style: TextStyle(color: Colors.black, fontSize: 14),
               ),
               Text(
                 'IDR ${MoneyFormatter.format(double.tryParse(_orderData?.totalPayment.toString() ?? '0'))}',
@@ -172,43 +195,98 @@ class UpdateOrder extends StatelessWidget {
             height: 20,
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Order Status : ',
+                style: TextStyle(color: Colors.black, fontSize: 14),
+              ),
+              Text(
+                '${_orderData?.orderStatus}',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Divider(
+            height: 20,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Payment Status : ',
+                style: TextStyle(color: Colors.black, fontSize: 14),
+              ),
+              Text(
+                '${_orderData?.payment?.paymentStatus}',
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          Divider(
+            height: 20,
+          ),
+          if (_userRole == UserEnum.Admin ||
+              _userRole == UserEnum.Cashier ||
+              _userRole == UserEnum.Waitress)
+            if (getOrderEnum[_orderData?.orderStatus] != OrderEnum.Cancel)
+              if (_orderData?.payment?.paymentStatus != 'settlement')
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    PrimaryColorButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _cancelOrder(_orderData);
+                      },
+                      textTitle: 'Cancel Order',
+                      size: Size(MediaQuery.of(context).size.width * 0.4,
+                          MediaQuery.of(context).size.width * 0.1),
+                    ),
+                    PrimaryColorButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _payOrder(_orderData);
+                      },
+                      textTitle: 'Pay Order',
+                      size: Size(MediaQuery.of(context).size.width * 0.4,
+                          MediaQuery.of(context).size.width * 0.1),
+                    ),
+                  ],
+                ),
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              ElevatedButton(
+              PrimaryColorButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text('Close'),
-                style: ElevatedButton.styleFrom(
-                  primary: ColorPalette.primaryColor,
-                  onPrimary: Colors.white,
-                  minimumSize: Size(
-                      MediaQuery.of(context).size.width * 0.4,
-                      MediaQuery.of(context).size.width * 0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
+                textTitle: 'Close',
+                size: Size(MediaQuery.of(context).size.width * 0.4,
+                    MediaQuery.of(context).size.width * 0.1),
               ),
               if (_userRole == UserEnum.Admin ||
-                  _userRole == UserEnum.Cashier)
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _updateOrderStatus(_orderData);
-                  },
-                  child: Text('Update Status Order'),
-                  style: ElevatedButton.styleFrom(
-                    primary: ColorPalette.primaryColor,
-                    onPrimary: Colors.white,
-                    minimumSize: Size(
-                        MediaQuery.of(context).size.width * 0.4,
+                  _userRole == UserEnum.Cashier ||
+                  _userRole == UserEnum.Waitress)
+                if (getOrderEnum[_orderData?.orderStatus] !=
+                        OrderEnum.WaitingPayment &&
+                    getOrderEnum[_orderData?.orderStatus] != OrderEnum.Cancel &&
+                    getOrderEnum[_orderData?.orderStatus] != OrderEnum.Finish)
+                  PrimaryColorButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _updateOrderStatus(_orderData, true);
+                    },
+                    textTitle: 'Update Status Order',
+                    size: Size(MediaQuery.of(context).size.width * 0.4,
                         MediaQuery.of(context).size.width * 0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
                   ),
-                ),
             ],
           ),
         ],

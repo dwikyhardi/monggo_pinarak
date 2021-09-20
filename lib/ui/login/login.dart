@@ -186,7 +186,7 @@ class Login extends StatelessWidget {
       Navigator.pop(navGK.currentState!.context);
       print(e);
       print('StackTrace ======= ${trace.toString()}');
-      CustomDialog.showDialogWithoutTittle(e);
+      CustomDialog.showDialogWithoutTittle(e.toString());
     });
   }
 }

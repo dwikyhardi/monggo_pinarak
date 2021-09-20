@@ -2,7 +2,7 @@ import 'package:monggo_pinarak/monggo_pinarak.dart';
 
 class MenuInteractor {
   static Future<List<MenuData>> getMenuList() async {
-    return MenuViewModel.getMenuList();
+    return MenuViewModel.getMenuList(false);
   }
 
   static Future<MenuData> insertNewMenu(

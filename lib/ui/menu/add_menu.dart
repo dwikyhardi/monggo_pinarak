@@ -239,7 +239,7 @@ class _AddMenuState extends State<AddMenu> {
                     SizedBox(
                       height: 10,
                     ),
-                    ElevatedButton(
+                    PrimaryColorButton(
                       onPressed: () {
                         FocusScope.of(context).requestFocus(FocusNode());
                         var form = _formKey.currentState;
@@ -261,16 +261,9 @@ class _AddMenuState extends State<AddMenu> {
                           }
                         }
                       },
-                      child: Text(_isUpdate ? 'Update Menu' : 'Input Menu'),
-                      style: ElevatedButton.styleFrom(
-                        primary: ColorPalette.primaryColor,
-                        onPrimary: Colors.white,
-                        fixedSize: Size(MediaQuery.of(context).size.width,
-                            MediaQuery.of(context).size.width * 0.1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
+                      textTitle: _isUpdate ? 'Update Menu' : 'Input Menu',
+                      size: Size(MediaQuery.of(context).size.width,
+                          MediaQuery.of(context).size.width * 0.1),
                     ),
                   ],
                 ),
@@ -362,7 +355,7 @@ class _AddMenuState extends State<AddMenu> {
       });
     }).catchError((e) {
       Navigator.pop(context);
-      CustomDialog.showDialogWithoutTittle(e);
+      CustomDialog.showDialogWithoutTittle(e.toString());
     });
   }
 
@@ -387,7 +380,7 @@ class _AddMenuState extends State<AddMenu> {
       });
     }).catchError((e) {
       Navigator.pop(context);
-      CustomDialog.showDialogWithoutTittle(e);
+      CustomDialog.showDialogWithoutTittle(e.toString());
     });
   }
 
