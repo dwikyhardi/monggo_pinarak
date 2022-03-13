@@ -97,7 +97,10 @@ class _MenuDetailState extends State<MenuDetail> {
                   width: MediaQuery.of(context).size.width,
                   fit: BoxFit.cover,
                   placeholder: (b, s) {
-                    return CupertinoActivityIndicator();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30.0),
+                      child: Center(child: CupertinoActivityIndicator()),
+                    );
                   },
                   errorWidget: (b, s, _) {
                     return Image.asset(
@@ -111,114 +114,116 @@ class _MenuDetailState extends State<MenuDetail> {
           ),
         ];
       },
-      body: Container(
-        padding: EdgeInsets.symmetric(vertical: 25, horizontal: 10),
-        child: Column(
-          children: [
-            Text(
-              data?.name ?? '',
-              style: TextStyle(
-                color: ColorPalette.primaryColor,
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Text(
-              'IDR ${MoneyFormatter.format(
-                double.tryParse(data?.price.toString() ?? '0'),
-              )}',
-              style: TextStyle(
+      body: SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 25, horizontal: 10),
+          child: Column(
+            children: [
+              Text(
+                data?.name ?? '',
+                style: TextStyle(
                   color: ColorPalette.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Text(
-              data?.description ?? '',
-              style: TextStyle(
-                color: ColorPalette.primaryColor,
+                ),
               ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            if (widget._userRole == UserEnum.Admin)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'Is Active',
-                    style: TextStyle(
-                        color: ColorPalette.primaryColor,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16),
-                  ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedOpacity(
-                        duration: Duration(milliseconds: 500),
-                        opacity: isLoading ? 0.5 : 1,
-                        child: CupertinoSwitch(
-                          value: data?.isActive ?? false,
-                          onChanged: (value) {
-                            isLoading = true;
-                            setState(() {});
-                            data?.isActive = value;
-                            _menu
-                                .doc(data?.menuId)
-                                .set(data?.toJson())
-                                .then((value) {
-                              print('success');
-                              _getMenuDetail();
-                            }).catchError((e, stack) {
-                              isLoading = false;
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                'IDR ${MoneyFormatter.format(
+                  double.tryParse(data?.price.toString() ?? '0'),
+                )}',
+                style: TextStyle(
+                    color: ColorPalette.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                data?.description ?? '',
+                style: TextStyle(
+                  color: ColorPalette.primaryColor,
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              if (widget._userRole == UserEnum.Admin)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Is Active',
+                      style: TextStyle(
+                          color: ColorPalette.primaryColor,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16),
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AnimatedOpacity(
+                          duration: Duration(milliseconds: 500),
+                          opacity: isLoading ? 0.5 : 1,
+                          child: CupertinoSwitch(
+                            value: data?.isActive ?? false,
+                            onChanged: (value) {
+                              isLoading = true;
                               setState(() {});
-                              print('error ${e.toString()}');
-                              print('stack ${stack.toString()}');
-                            });
-                          },
+                              data?.isActive = value;
+                              _menu
+                                  .doc(data?.menuId)
+                                  .set(data?.toJson())
+                                  .then((value) {
+                                print('success');
+                                _getMenuDetail();
+                              }).catchError((e, stack) {
+                                isLoading = false;
+                                setState(() {});
+                                print('error ${e.toString()}');
+                                print('stack ${stack.toString()}');
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                      if (isLoading) CupertinoActivityIndicator(),
-                    ],
-                  ),
-                ],
-              ),
-            if (widget._userRole == UserEnum.Admin)
-              PrimaryColorButton(
-                onPressed: () {
-                  routePush(AddMenu(
-                    true,
-                    menuData: data,
-                  )).then((isNewData) {
-                    if (isNewData != null) {
-                      if (isNewData) {
-                        Navigator.pop(context, true);
+                        if (isLoading) CupertinoActivityIndicator(),
+                      ],
+                    ),
+                  ],
+                ),
+              if (widget._userRole == UserEnum.Admin)
+                PrimaryColorButton(
+                  onPressed: () {
+                    routePush(AddMenu(
+                      true,
+                      menuData: data,
+                    )).then((isNewData) {
+                      if (isNewData != null) {
+                        if (isNewData) {
+                          Navigator.pop(context, true);
+                        }
                       }
-                    }
-                  });
-                },
-                textTitle: 'Update Menu',
-                size: Size(MediaQuery.of(context).size.width,
-                    MediaQuery.of(context).size.width * 0.1),
-              ),
-            if (widget._userRole == UserEnum.Admin)
-              PrimaryColorButton(
-                onPressed: () {
-                  _deleteMenuConfirmation(context);
-                },
-                textTitle: 'Delete Menu',
-                size: Size(MediaQuery.of(context).size.width,
-                    MediaQuery.of(context).size.width * 0.1),
-              ),
-          ],
+                    });
+                  },
+                  textTitle: 'Update Menu',
+                  size: Size(MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).size.width * 0.1),
+                ),
+              if (widget._userRole == UserEnum.Admin)
+                PrimaryColorButton(
+                  onPressed: () {
+                    _deleteMenuConfirmation(context);
+                  },
+                  textTitle: 'Delete Menu',
+                  size: Size(MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).size.width * 0.1),
+                ),
+            ],
+          ),
         ),
       ),
     );

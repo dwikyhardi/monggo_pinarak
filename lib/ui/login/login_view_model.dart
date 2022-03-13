@@ -35,24 +35,26 @@ class LoginViewModel {
       });
     } on FirebaseAuthException catch (e) {
       print('error Code ======== ${e.code}');
-      return Future.error(e.code, e.stackTrace);
+      return Future.error(e.message.toString(), e.stackTrace);
     }
     return isLoginSuccess;
   }
 
-  static Future<List<UserData>> getUserList() async {
-    List<UserData> userDataList = <UserData>[];
+  static Future<int> getUserCount() async {
+    // List<UserData> userDataList = <UserData>[];
+    int userCount = 0;
     await _users.get().then((userList) {
-      userList.docs.forEach((userData) {
-        if (userData.exists && userData.data() != null) {
-          print(
-              'UserData Object ${userData.id} ======== ${jsonEncode(userData.data())}');
-          userDataList
-              .add(UserData.fromJson(userData.data() as Map<String, dynamic>));
-        }
-      });
+      // userList.docs.forEach((userData) {
+      //   if (userData.exists && userData.data() != null) {
+      //     print(
+      //         'UserData Object ${userData.id} ======== ${jsonEncode(userData.data())}');
+      //     userDataList
+      //         .add(UserData.fromJson(userData.data() as Map<String, dynamic>));
+      //   }
+      // });
+      userCount = userList.size;
     });
 
-    return userDataList;
+    return userCount;
   }
 }

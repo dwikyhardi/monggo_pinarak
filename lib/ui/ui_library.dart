@@ -4,6 +4,14 @@ library ui_library;
 export 'dashboard/dashboard.dart';
 export 'dashboard/dashboard_drawer.dart';
 
+//ForgotPassword
+export 'forgot_password/forgot_password.dart';
+export 'forgot_password/forgot_password_interactor.dart';
+export 'forgot_password/forgot_password_view_model.dart';
+
+//Home
+export 'home/home.dart';
+
 //Login
 export 'login/login.dart';
 export 'login/login_interactor.dart';
@@ -15,6 +23,9 @@ export 'menu/menu.dart';
 export 'menu/menu_detail.dart';
 export 'menu/menu_interactor.dart';
 export 'menu/menu_view_model.dart';
+
+//NewDashboard
+export 'new_dashboard/new_dashboard.dart';
 
 //Order
 export 'order/order.dart';

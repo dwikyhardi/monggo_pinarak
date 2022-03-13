@@ -26,20 +26,42 @@ class _RegisterState extends State<Register> {
 
   bool _isObscure = true;
 
-  late List<UserEnum> _userRoleList = widget._userRole == UserEnum.Admin
-      ? [
+  late List<UserEnum> _userRoleList;
+
+  @override
+  void initState() {
+    super.initState();
+    switch (widget._userRole) {
+      case UserEnum.Admin:
+        _userRoleList = [
           UserEnum.Admin,
           UserEnum.Cashier,
           UserEnum.Owner,
           UserEnum.User,
           UserEnum.Waitress,
-        ]
-      : [
+        ];
+        break;
+      case UserEnum.Waitress:
+      case UserEnum.Cashier:
+      case UserEnum.Owner:
+        _userRoleList = [
           UserEnum.Cashier,
           UserEnum.Owner,
           UserEnum.User,
           UserEnum.Waitress,
         ];
+        break;
+      case UserEnum.User:
+        _userRoleList = [
+          UserEnum.User,
+        ];
+        break;
+      default:
+        _userRoleList = [
+          UserEnum.User,
+        ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,45 +259,48 @@ class _RegisterState extends State<Register> {
                     SizedBox(
                       height: 10,
                     ),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: ColorPalette.primaryColor,
-                          width: 1,
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<UserEnum>(
-                          isDense: false,
-                          value: _selectedUserRole,
-                          iconEnabledColor: ColorPalette.primaryColor,
-                          onChanged: (selected) {
-                            setState(() {
-                              _selectedUserRole = selected;
-                            });
-                            print(_selectedUserRole.toString());
-                          },
-                          hint: Text(
-                            'Select User Role',
-                            style: TextStyle(color: ColorPalette.primaryColor),
+                    if (widget._userRole != null &&
+                        widget._userRole != UserEnum.User)
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: ColorPalette.primaryColor,
+                            width: 1,
                           ),
-                          dropdownColor: Colors.white,
-                          items: _userRoleList.map((e) {
-                            return DropdownMenuItem(
-                              child: Text(
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<UserEnum>(
+                            isDense: false,
+                            value: _selectedUserRole,
+                            iconEnabledColor: ColorPalette.primaryColor,
+                            onChanged: (selected) {
+                              setState(() {
+                                _selectedUserRole = selected;
+                              });
+                              print(_selectedUserRole.toString());
+                            },
+                            hint: Text(
+                              'Select User Role',
+                              style:
+                                  TextStyle(color: ColorPalette.primaryColor),
+                            ),
+                            dropdownColor: Colors.white,
+                            items: _userRoleList.map((e) {
+                              return DropdownMenuItem(
+                                child: Text(
                                   getStringUserEnum[e] ?? '',
-                                style:
-                                    TextStyle(color: ColorPalette.primaryColor),
-                              ),
-                              value: e,
-                            );
-                          }).toList(),
+                                  style: TextStyle(
+                                      color: ColorPalette.primaryColor),
+                                ),
+                                value: e,
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -315,13 +340,36 @@ class _RegisterState extends State<Register> {
             _nameController.text)
         .then((isSuccess) {
       if (isSuccess) {
-        widget._drawerChangeStream.sink.add(DrawerItems.report);
+        if (widget._userRole != null && widget._userRole != UserEnum.User) {
+          widget._drawerChangeStream.sink.add(DrawerItems.report);
+        } else {
+          _loginAfterRegister();
+        }
       } else {
         CustomDialog.showDialogWithoutTittle('Error Register');
       }
       Navigator.pop(navGK.currentState!.context);
     }).catchError((e) {
       Navigator.pop(navGK.currentState!.context);
+      CustomDialog.showDialogWithoutTittle(e.toString());
+    });
+  }
+
+  void _loginAfterRegister() {
+    CustomDialog.showLoading();
+    LoginInteractor.onLogin(_emailController.text, _passwordController.text)
+        .then((isSuccess) {
+      print('IsSuccess ====== $isSuccess');
+      if (isSuccess) {
+        pushAndRemoveUntil(SplashScreen());
+      } else {
+        Navigator.pop(navGK.currentState!.context);
+        CustomDialog.showDialogWithoutTittle('Error Login');
+      }
+    }).catchError((e, trace) {
+      Navigator.pop(navGK.currentState!.context);
+      print(e);
+      print('StackTrace ======= ${trace.toString()}');
       CustomDialog.showDialogWithoutTittle(e.toString());
     });
   }

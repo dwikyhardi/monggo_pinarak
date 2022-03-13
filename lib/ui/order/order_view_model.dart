@@ -44,8 +44,8 @@ class OrderViewModel {
         if (orderList.size > 0) {
           return orderList.docs.forEach((orderData) {
             if (orderData.exists && orderData.data() != null) {
-              print(
-                  'Order Object ${orderData.id} ======== ${jsonEncode(orderData.data())}');
+              // print(
+              //     'Order Object ${orderData.id} ======== ${jsonEncode(orderData.data())}');
               var order =
                   OrderData.fromJson(orderData.data() as Map<String, dynamic>);
               return orderDataList.add(order);
@@ -70,8 +70,8 @@ class OrderViewModel {
         if (orderList.size > 0) {
           return orderList.docs.forEach((orderData) {
             if (orderData.exists && orderData.data() != null) {
-              print(
-                  'Order Object ${orderData.id} ======== ${jsonEncode(orderData.data())}');
+              // print(
+              //     'Order Object ${orderData.id} ======== ${jsonEncode(orderData.data())}');
               var order =
                   OrderData.fromJson(orderData.data() as Map<String, dynamic>);
               orderDataList.add(order);
@@ -287,8 +287,8 @@ class OrderViewModel {
     return EWalletPaymentRequest(
       customerDetails: orderData.customer,
       gopay: Gopay(
-        callbackUrl: 'monggoPinarak://',
-        enableCallback: true,
+        // callbackUrl: 'monggoPinarak://',
+        enableCallback: false,
       ),
       paymentType: 'gopay',
       transactionDetails: TransactionDetails(

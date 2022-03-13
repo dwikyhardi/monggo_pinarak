@@ -8,8 +8,8 @@ class ReportViewModel {
     var menuCount = 0;
     var userCount = 0;
     var orderList = <OrderData>[];
-    var menuList = <MenuData>[];
-    var userList = <UserData>[];
+    // var menuList = <MenuData>[];
+    // var userList = <UserData>[];
     var totalIncome = 0;
     await OrderInteractor.getOrderList(_userRole, _userId,
             reportType: reportType)
@@ -19,21 +19,20 @@ class ReportViewModel {
       orderList.forEach((element) {
         totalIncome = totalIncome + (element.totalPayment ?? 0);
       });
-      await MenuInteractor.getMenuList().then((menu) async {
-        menuCount = menu.length;
-        menuList = menu;
-        await LoginInteractor.getUserList().then((user) async {
-          userCount = user.length;
-          userList = user;
+      await MenuInteractor.getMenuCount().then((menu) async {
+        menuCount = menu;
+        await LoginInteractor.getUserCount().then((user) async {
+          userCount = user;
+          // userList = user;
         });
       });
     });
 
     return ReportData(
-        userList: userList,
+        // userList: userList,
         orderCount: orderCount,
         userCount: userCount,
-        menuList: menuList,
+        // menuList: menuList,
         menuCount: menuCount,
         orderList: orderList,
         totalIncome: totalIncome);
@@ -63,9 +62,9 @@ class ReportViewModel {
       orderCount: orderCount,
       totalIncome: totalIncome,
       menuCount: reportData.menuCount,
-      menuList: reportData.menuList,
+      // menuList: reportData.menuList,
       userCount: reportData.userCount,
-      userList: reportData.userList,
+      // userList: reportData.userList,
     );
   }
 }

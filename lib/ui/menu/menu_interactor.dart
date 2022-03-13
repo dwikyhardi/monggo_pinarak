@@ -5,6 +5,10 @@ class MenuInteractor {
     return MenuViewModel.getMenuList(false);
   }
 
+  static Future<int> getMenuCount()async{
+    return MenuViewModel.getMenuCount();
+  }
+
   static Future<MenuData> insertNewMenu(
       MenuData menuData, String filePath) async {
     return MenuViewModel.insertNewMenu(menuData, filePath);

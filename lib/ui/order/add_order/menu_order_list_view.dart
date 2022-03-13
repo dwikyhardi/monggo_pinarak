@@ -33,7 +33,7 @@ class MenuOrderListView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 5,vertical: 15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -47,10 +47,16 @@ class MenuOrderListView extends StatelessWidget {
                   SizedBox(
                     height: 5,
                   ),
-                  RichText(
-                    text: TextSpan(
-                      text: menuData?.description ?? '',
-                      style: TextStyle(color: Colors.grey[800]),
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.5,
+                    child: RichText(
+                      text: TextSpan(
+                        text: menuData?.description ?? '',
+                        style: TextStyle(color: Colors.grey[800]),
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                   ),
                   SizedBox(
@@ -80,10 +86,18 @@ class MenuOrderListView extends StatelessWidget {
                       fit: BoxFit.cover,
                       imageUrl: menuData?.imageUrl ?? '',
                       placeholder: (b, s) {
-                        return CupertinoActivityIndicator();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 30.0),
+                          child: Center(child: CupertinoActivityIndicator()),
+                        );
                       },
                       errorWidget: (b, s, _) {
-                        return Image.asset('assets/icons/ic_logo.png');
+                        return Center(
+                          child: Image.asset(
+                            'assets/icons/ic_logo.png',
+                            width: MediaQuery.of(context).size.width / 4,
+                          ),
+                        );
                       },
                     ),
                   ),

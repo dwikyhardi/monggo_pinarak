@@ -6,8 +6,8 @@ class ReportData {
   int? userCount;
   int? totalIncome;
   List<OrderData>? orderList;
-  List<MenuData>? menuList;
-  List<UserData>? userList;
+  // List<MenuData>? menuList;
+  // List<UserData>? userList;
 
   ReportData(
       {this.orderCount = 0,
@@ -15,8 +15,9 @@ class ReportData {
       this.userCount = 0,
       this.totalIncome = 0,
       this.orderList = const <OrderData>[],
-      this.menuList = const <MenuData>[],
-      this.userList = const <UserData>[]});
+      // this.menuList = const <MenuData>[],
+      // this.userList = const <UserData>[]
+      });
 
   ReportData.fromJson(Map<String, dynamic> json) {
     orderCount = json['order_count'];
@@ -24,8 +25,8 @@ class ReportData {
     userCount = json['user_count'];
     totalIncome = json['total_income'];
     orderList = json['order_list'];
-    menuList = json['menu_list'];
-    userList = json['user_list'];
+    // menuList = json['menu_list'];
+    // userList = json['user_list'];
   }
 
   Map<String, dynamic> toJson() {
@@ -35,8 +36,8 @@ class ReportData {
     data['user_count'] = this.userCount;
     data['total_income'] = this.totalIncome;
     data['order_list'] = this.orderList;
-    data['menu_list'] = this.menuList;
-    data['user_list'] = this.userList;
+    // data['menu_list'] = this.menuList;
+    // data['user_list'] = this.userList;
     return data;
   }
 }

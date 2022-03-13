@@ -11,6 +11,7 @@ enum DrawerItems {
   register,
   logout,
   login,
+  forgotPassword,
 }
 
 final Map<DrawerItems, String> getStringDrawerItems = {
@@ -21,6 +22,7 @@ final Map<DrawerItems, String> getStringDrawerItems = {
   DrawerItems.register: 'Register',
   DrawerItems.logout: 'Logout',
   DrawerItems.login: 'Login',
+  DrawerItems.forgotPassword: 'Forgot Password',
 };
 
 final Map<String, DrawerItems> getDrawerItems = {
@@ -31,6 +33,7 @@ final Map<String, DrawerItems> getDrawerItems = {
   'Register': DrawerItems.register,
   'Logout': DrawerItems.logout,
   'Login': DrawerItems.login,
+  'Forgot Password': DrawerItems.forgotPassword,
 };
 
 class DashboardDrawer extends StatelessWidget {
@@ -92,9 +95,8 @@ class DashboardDrawer extends StatelessWidget {
   }
 
   Widget _getDrawerItem(BuildContext context) {
+    var children = <Widget>[];
     if (_isLogin) {
-      var children = <Widget>[];
-
       switch (_userRole) {
         case UserEnum.Admin:
           children.add(_orderButton(context));
@@ -128,15 +130,17 @@ class DashboardDrawer extends StatelessWidget {
         default:
           break;
       }
-
-      return ListView(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        children: children,
-      );
     } else {
-      return _loginButton(context);
+      children.add(_registerButton(context));
+      children.add(_loginButton(context));
+      children.add(_forgotPasswordButton(context));
     }
+
+    return ListView(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      children: children,
+    );
   }
 
   Widget _loginButton(BuildContext context) {
@@ -170,6 +174,13 @@ class DashboardDrawer extends StatelessWidget {
   Widget _menuButton(BuildContext context) {
     return _drawerItem(DrawerItems.menu, onTap: () {
       _drawerChangeStream.sink.add(DrawerItems.menu);
+      Navigator.pop(context);
+    });
+  }
+
+  Widget _forgotPasswordButton(BuildContext context) {
+    return _drawerItem(DrawerItems.forgotPassword, onTap: () {
+      _drawerChangeStream.sink.add(DrawerItems.forgotPassword);
       Navigator.pop(context);
     });
   }
@@ -219,6 +230,10 @@ class DashboardDrawer extends StatelessWidget {
       case DrawerItems.menu:
         title = 'Menu';
         icon = Icons.restaurant;
+        break;
+      case DrawerItems.forgotPassword:
+        title = 'Forgot Password';
+        icon = Icons.password;
         break;
     }
     return ListTile(

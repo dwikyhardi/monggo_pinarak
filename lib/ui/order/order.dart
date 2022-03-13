@@ -14,7 +14,7 @@ class Order extends StatefulWidget {
   const Order(this._userRole, this._drawerChangeStream, this._userData,
       {Key? key})
       : super(key: key);
-  final StreamController<DrawerItems?> _drawerChangeStream;
+  final StreamController<DrawerItems?>? _drawerChangeStream;
   final UserData? _userData;
   final UserEnum _userRole;
 
@@ -164,10 +164,14 @@ class _OrderState extends State<Order> {
       await OrderInteractor.getOrderStatus(orderData?.orderId ?? '')
           .then((orderStatus) async {
         Navigator.pop(context);
-        await _checkOrderStatus(orderStatus, orderData, false).then((value) {
-          print('_checkOrderStatus Value ========= ${jsonEncode(value)}');
-          _showDetailOrder(value);
-        });
+        if(orderStatus['status_code'] != '404'){
+          await _checkOrderStatus(orderStatus, orderData, false).then((value) {
+            print('_checkOrderStatus Value ========= ${jsonEncode(value)}');
+            _showDetailOrder(value);
+          });
+        }else{
+          CustomDialog.showDialogWithoutTittle(orderStatus['status_message']);
+        }
       }).catchError((e, stack) {
         Navigator.pop(context);
         print('Stack ====== ${stack.toString()}');
@@ -345,12 +349,17 @@ class _OrderState extends State<Order> {
                   width: MediaQuery.of(context).size.width,
                   fit: BoxFit.cover,
                   placeholder: (b, s) {
-                    return CupertinoActivityIndicator();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30.0),
+                      child: Center(child: CupertinoActivityIndicator()),
+                    );
                   },
                   errorWidget: (b, s, _) {
-                    return Image.asset(
-                      'assets/icons/ic_logo.png',
-                      color: Colors.white,
+                    return Center(
+                      child: Image.asset(
+                        'assets/icons/ic_logo.png',
+                        width: MediaQuery.of(context).size.width / 4,
+                      ),
                     );
                   },
                 ),

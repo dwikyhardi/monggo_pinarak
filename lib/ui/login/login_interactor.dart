@@ -22,8 +22,7 @@ class LoginInteractor {
     // return isLoginSuccess;
   }
 
-  static Future<List<UserData>> getUserList() async {
-    return LoginViewModel.getUserList();
+  static Future<int> getUserCount() async {
+    return LoginViewModel.getUserCount();
   }
-
 }

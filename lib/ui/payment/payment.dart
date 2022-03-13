@@ -70,7 +70,7 @@ class _PaymentState extends State<Payment> {
   }
 
   Widget _getImagePaymentMethod(PaymentMethod paymentMethod) {
-    var assets = 'assets/icons/';
+    var assets = 'assets/icons';
     switch (paymentMethod) {
       case PaymentMethod.Gopay:
         assets = '$assets/ic_gopay.png';

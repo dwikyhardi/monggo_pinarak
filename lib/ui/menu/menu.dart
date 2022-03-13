@@ -68,16 +68,14 @@ class _MenuState extends State<Menu> {
                       controller: _refreshController,
                       child: GridView.builder(
                           padding: EdgeInsets.only(
-                              bottom:
-                                  MediaQuery.of(context).size.width * 0.15),
+                              bottom: MediaQuery.of(context).size.width * 0.15),
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             childAspectRatio: 1,
                           ),
                           itemCount: snapshot.data?.length ?? 0,
-                          itemBuilder:
-                              (BuildContext buildContext, int index) {
+                          itemBuilder: (BuildContext buildContext, int index) {
                             return _cardMenu(snapshot.data?[index]);
                           }),
                     );
@@ -141,10 +139,18 @@ class _MenuState extends State<Menu> {
               child: CachedNetworkImage(
                 imageUrl: menuData?.imageUrl ?? '',
                 placeholder: (b, s) {
-                  return CupertinoActivityIndicator();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 30.0),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
                 },
                 errorWidget: (b, s, _) {
-                  return Image.asset('assets/icons/ic_logo.png');
+                  return Center(
+                    child: Image.asset(
+                      'assets/icons/ic_logo.png',
+                      width: MediaQuery.of(context).size.width / 4,
+                    ),
+                  );
                 },
               ),
             ),
@@ -171,6 +177,18 @@ class _MenuState extends State<Menu> {
                     )}',
                     style: TextStyle(
                       color: ColorPalette.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  Text(
+                    menuData?.isActive ?? false ? 'Active' : 'Inactive',
+                    style: TextStyle(
+                      color: menuData?.isActive ?? false
+                          ? Colors.green
+                          : Colors.red,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

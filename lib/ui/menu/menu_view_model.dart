@@ -50,6 +50,15 @@ class MenuViewModel {
     return menuDataList;
   }
 
+  static Future<int> getMenuCount() async {
+    // List<MenuData> menuDataList = <MenuData>[];
+    int menuCount = 0;
+      await _menu.get().then((menuList) {
+        menuCount = menuList.size;
+      });
+    return menuCount;
+  }
+
   static Future<MenuData> getDataMenu(String id) async {
     MenuData menuData = MenuData();
     await _menu.doc(id).get().then((value) {

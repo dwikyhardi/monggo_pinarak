@@ -84,13 +84,13 @@ class _DashboardState extends State<Dashboard> {
           _userData = UserData.fromJson(jsonDecode(user));
           _userRole =
               getUserEnum[Encrypt().decrypt(_userData?.userRole, passKey)];
-          print('User Data ==== ${_userData?.toJson()}');
-          print(
-              'User Role ==== ${Encrypt().decrypt(_userData?.userRole, passKey)}');
-          print(
-              'User Role dec ==== ${getUserEnum[Encrypt().decrypt(_userData?.userRole, passKey)]}');
-          print(
-              'User Role enc ==== ${Encrypt().encrypt(getStringUserEnum[UserEnum.User] ?? '', passKey)}');
+          // print('User Data ==== ${_userData?.toJson()}');
+          // print(
+          //     'User Role ==== ${Encrypt().decrypt(_userData?.userRole, passKey)}');
+          // print(
+          //     'User Role dec ==== ${getUserEnum[Encrypt().decrypt(_userData?.userRole, passKey)]}');
+          // print(
+          //     'User Role enc ==== ${Encrypt().encrypt(getStringUserEnum[UserEnum.User] ?? '', passKey)}');
           setState(() {});
         });
       }
@@ -125,6 +125,8 @@ class _DashboardState extends State<Dashboard> {
         return Login(_drawerChangeStream);
       case DrawerItems.menu:
         return Menu(_drawerChangeStream, _userRole);
+      case DrawerItems.forgotPassword:
+        return ForgotPassword(_drawerChangeStream);
       default:
         return Container(
           child: Text(drawerItems.toString()),

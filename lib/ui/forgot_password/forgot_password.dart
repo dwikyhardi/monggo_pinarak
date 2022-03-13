@@ -1,14 +1,14 @@
 import 'dart:async';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:monggo_pinarak/monggo_pinarak.dart';
 
-class Login extends StatelessWidget {
-  Login(this._drawerChangeStream, {Key? key}) : super(key: key);
+class ForgotPassword extends StatelessWidget {
+  ForgotPassword(this._drawerChangeStream, {Key? key}) : super(key: key);
   final StreamController<DrawerItems?> _drawerChangeStream;
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -29,7 +29,7 @@ class Login extends StatelessWidget {
                 height: 20,
               ),
               Text(
-                'Login',
+                'Forgot Password',
                 style: TextStyle(
                   fontSize: 24,
                   color: ColorPalette.primaryColor,
@@ -92,79 +92,11 @@ class Login extends StatelessWidget {
                         }
                       },
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        hintText: '********',
-                        hintStyle: TextStyle(
-                          color: ColorPalette.primaryColorLight,
-                        ),
-                        labelStyle: TextStyle(
-                          color: ColorPalette.primaryColor,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
-                            color: ColorPalette.primaryColor,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
-                            color: ColorPalette.primaryColor,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
-                            color: ColorPalette.primaryColor,
-                          ),
-                        ),
-                        disabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide(
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                      style: TextStyle(
-                        color: ColorPalette.primaryColorLight,
-                      ),
-                      obscureText: true,
-                      keyboardType: TextInputType.visiblePassword,
-                      controller: _passwordController,
-                      validator: (input) {
-                        if (input == null || input.length == 0) {
-                          return 'Password is required';
-                        }
-                      },
-                    ),
                   ],
                 ),
               ),
               SizedBox(
                 height: 20,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  InkWell(
-                    onTap: (){
-                      _drawerChangeStream.sink.add(DrawerItems.forgotPassword);
-                    },
-                    child: Text(
-                      'Forgot Password?',
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                        color: CupertinoColors.activeBlue,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
               ),
               SizedBox(
                 height: 20,
@@ -174,10 +106,10 @@ class Login extends StatelessWidget {
                   var form = _formKey.currentState;
                   if (form != null && form.validate()) {
                     form.save();
-                    _onLogin();
+                    _onForgotPassword();
                   }
                 },
-                child: Text('Login'),
+                child: Text('Forgot Password'),
                 style: ElevatedButton.styleFrom(
                   primary: ColorPalette.primaryColor,
                   shape: RoundedRectangleBorder(
@@ -193,22 +125,21 @@ class Login extends StatelessWidget {
     );
   }
 
-  void _onLogin() {
+  void _onForgotPassword() {
     CustomDialog.showLoading();
-    LoginInteractor.onLogin(_emailController.text, _passwordController.text)
-        .then((isSuccess) {
-      print('IsSuccess ====== $isSuccess');
-      if (isSuccess) {
-        pushAndRemoveUntil(SplashScreen());
-      } else {
-        Navigator.pop(navGK.currentState!.context);
-        CustomDialog.showDialogWithoutTittle('Error Login');
-      }
-    }).catchError((e, trace) {
+    ForgotPasswordInteractor.resetPassword(_emailController.text).then((value) {
+      Navigator.pop(navGK.currentState!.context);
+      CustomDialog.showDialogWithoutTittle(
+          'Success send forgot password request.\nPlease Check Your Email at ${_emailController.text}').then((value) {
+            _drawerChangeStream.sink.add(DrawerItems.login);
+      });
+    }).catchError((e) {
       Navigator.pop(navGK.currentState!.context);
       print(e);
-      print('StackTrace ======= ${trace.toString()}');
-      CustomDialog.showDialogWithoutTittle(e.toString());
+      print('StackTrace ======= ${e.stackTrace.toString()}');
+      CustomDialog.showDialogWithoutTittle(e.message.toString());
+      FirebaseCrashlytics.instance
+          .recordError(e.code, e.stackTrace, reason: e.message.toString());
     });
   }
 }

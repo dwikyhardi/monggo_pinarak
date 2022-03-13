@@ -16,6 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     setPassKey().then((_) {
       Future.delayed(Duration(seconds: 1),(){
         pushAndRemoveUntil(Dashboard());
+        // pushAndRemoveUntil(NewDashboard());
       });
     });
   }

@@ -151,7 +151,7 @@ class _AddOrderState extends State<AddOrder> {
     if (_selectedLayoutConfig == 0) {
       return ListView.builder(
           padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).size.width * 0.15),
+              EdgeInsets.only(bottom: _selectedMenuDataList.length > 0 ? MediaQuery.of(context).size.width * 0.15 : 10),
           itemCount: snapshot.data?.length ?? 0,
           itemBuilder: (BuildContext buildContext, int index) {
             return MenuOrderListView(
@@ -163,7 +163,7 @@ class _AddOrderState extends State<AddOrder> {
     } else {
       return GridView.builder(
           padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).size.width * 0.15),
+              EdgeInsets.only(bottom: _selectedMenuDataList.length > 0 ? MediaQuery.of(context).size.width * 0.15 : 10),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             childAspectRatio: 0.85,
@@ -182,15 +182,11 @@ class _AddOrderState extends State<AddOrder> {
   void _addOrderConfirmation() {
     var totalQty = 0;
     var totalPayment = 0.0;
-    //TODO: Remove Text
-    TextEditingController _tableNumberController =
-        TextEditingController(text: '5');
-    TextEditingController _nameController =
-        TextEditingController(text: 'Dwiky');
+    TextEditingController _tableNumberController = TextEditingController();
+    TextEditingController _nameController = TextEditingController();
     TextEditingController _phoneNumberNumberController =
-        TextEditingController(text: '087885486650');
-    TextEditingController _emailController =
-        TextEditingController(text: 'dwikyhardiansah93@gmail.com');
+        TextEditingController();
+    TextEditingController _emailController = TextEditingController();
     _selectedMenuDataList.forEach((element) {
       totalQty = totalQty + (element?.qty ?? 0);
       totalPayment =
@@ -321,8 +317,12 @@ class _AddOrderState extends State<AddOrder> {
   }
 
   void _showMenuDetail(MenuData? menuData) {
+    var updateQtyIndex = _selectedMenuDataList
+        .indexWhere((element) => element?.menuId == menuData?.menuId);
+    var isAddedToCart = updateQtyIndex != -1;
     showModalBottomSheet(
         context: context,
+        isScrollControlled: true,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
@@ -330,6 +330,7 @@ class _AddOrderState extends State<AddOrder> {
           return MenuDetailOrder(
             menuData: menuData,
             addMenuButton: _addMenuButton,
+            isAddedToCart: isAddedToCart,
           );
         });
   }

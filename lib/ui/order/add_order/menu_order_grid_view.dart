@@ -38,10 +38,18 @@ class MenuOrderGridView extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: menuData?.imageUrl ?? '',
                 placeholder: (b, s) {
-                  return CupertinoActivityIndicator();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 30.0),
+                    child: Center(child: CupertinoActivityIndicator()),
+                  );
                 },
                 errorWidget: (b, s, _) {
-                  return Image.asset('assets/icons/ic_logo.png');
+                  return Center(
+                    child: Image.asset(
+                      'assets/icons/ic_logo.png',
+                      width: MediaQuery.of(context).size.width / 4,
+                    ),
+                  );
                 },
               ),
             ),

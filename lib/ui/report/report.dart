@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:date_util/date_util.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -7,9 +6,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:monggo_pinarak/monggo_pinarak.dart';
 import 'package:monggo_pinarak/ui/ui_library.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class Report extends StatefulWidget {
-  final StreamController<DrawerItems?> _drawerChangeStream;
+  final StreamController<DrawerItems?>? _drawerChangeStream;
   final UserEnum _userRole;
   final String _userId;
 
@@ -24,6 +24,8 @@ class Report extends StatefulWidget {
 class _ReportState extends State<Report> {
   final StreamController<ReportData> _reportStream = StreamController();
   ReportEnum _reportType = ReportEnum.Daily;
+
+  RefreshController _refreshController = RefreshController();
 
   @override
   void dispose() {
@@ -42,6 +44,10 @@ class _ReportState extends State<Report> {
             reportType: _reportType)
         .then((data) {
       _reportStream.sink.add(data);
+      _refreshController.refreshCompleted();
+    }).catchError((e) {
+      print(e);
+      _refreshController.refreshFailed();
     });
   }
 
@@ -78,33 +84,43 @@ class _ReportState extends State<Report> {
                 height: devHeight,
                 child: Stack(
                   children: [
-                    SingleChildScrollView(
-                      child: Container(
-                        child: Column(
-                          children: [
-                            _buildChart(snapshot.data?.orderList),
-                            GridView(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 10,
+                    SmartRefresher(
+                      controller: _refreshController,
+                      onRefresh: _getReport,
+                      enablePullDown: true,
+                      enablePullUp: false,
+                      scrollDirection: Axis.vertical,
+                      header: WaterDropHeader(
+                        waterDropColor: ColorPalette.primaryColor,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Container(
+                          child: Column(
+                            children: [
+                              _buildChart(snapshot.data?.orderList),
+                              GridView(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        childAspectRatio: 1.75),
+                                shrinkWrap: true,
+                                children: [
+                                  _reportWidget(devWidth, 'Total Order',
+                                      data.orderCount ?? 0),
+                                  _reportWidget(devWidth, 'Total Income',
+                                      data.totalIncome ?? 0),
+                                  _reportWidget(devWidth, 'Total Menu',
+                                      data.menuCount ?? 0),
+                                  _reportWidget(devWidth, 'Total User',
+                                      data.userCount ?? 0),
+                                ],
+                                physics: NeverScrollableScrollPhysics(),
                               ),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      childAspectRatio: 1.75),
-                              shrinkWrap: true,
-                              children: [
-                                _reportWidget(devWidth, 'Total Order',
-                                    data.orderCount ?? 0),
-                                _reportWidget(devWidth, 'Total Income',
-                                    data.totalIncome ?? 0),
-                                _reportWidget(devWidth, 'Total Menu',
-                                    data.menuCount ?? 0),
-                                _reportWidget(devWidth, 'Total User',
-                                    data.userCount ?? 0),
-                              ],
-                              physics: NeverScrollableScrollPhysics(),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
